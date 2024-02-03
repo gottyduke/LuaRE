@@ -12,7 +12,7 @@ include(GNUInstallDirs)
 
 # info
 project(
-	LuaTest
+	LuaRE
 	VERSION 1.0.0
 	LANGUAGES CXX
 )
@@ -52,18 +52,33 @@ source_group(
 add_subdirectory($ENV{CommonLibSSEPath} CommonLibSSE)
 add_subdirectory($ENV{DKUtilPath} DKUtil)
 find_package(spdlog CONFIG REQUIRED)
+find_package(lua CONFIG REQUIRED)
+find_package(sol2 CONFIG REQUIRED)
+include(FindLua)
 
 # cmake target
-# runtime
+if(NOT LUARE_RUNTIME_BUILD)
+# embed
 add_library(
 	${PROJECT_NAME}
 	SHARED
-		${SOURCES}
-		${CMAKE_CURRENT_BINARY_DIR}/include/Plugin.h
-		${CMAKE_CURRENT_BINARY_DIR}/version.rc
-		.clang-format
-		vcpkg.json
+	${SOURCES}
+	${CMAKE_CURRENT_BINARY_DIR}/include/Plugin.h
+	${CMAKE_CURRENT_BINARY_DIR}/version.rc
+	.clang-format
+	vcpkg.json
 )
+else()
+# runtime
+add_executable(
+	${PROJECT_NAME}
+	${SOURCES}
+	${CMAKE_CURRENT_BINARY_DIR}/include/Plugin.h
+	${CMAKE_CURRENT_BINARY_DIR}/version.rc
+	.clang-format
+	vcpkg.json
+)
+endif()
 
 # include dir
 target_include_directories(
@@ -72,6 +87,7 @@ target_include_directories(
 		${CMAKE_CURRENT_BINARY_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 		${CMAKE_CURRENT_SOURCE_DIR}/src
+		
 )
 
 # linkage
@@ -81,6 +97,7 @@ target_link_libraries(
 		CommonLibSSE::CommonLibSSE
 		DKUtil::DKUtil
 		spdlog::spdlog
+		${LUA_LIBRARIES}
 )
 
 # compiler def
@@ -125,7 +142,16 @@ target_precompile_headers(
 		src/PCH.h
 )
 
+if(NOT LUARE_RUNTIME_BUILD)
 # post build event
+add_custom_command(
+	TARGET 
+		${PROJECT_NAME} 
+	POST_BUILD
+    	COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/scripts"
+        "$ENV{SkyrimSEPath}/Data/SKSE/Plugins/LuaRE"
+)
 add_custom_command(
 	TARGET 
 		${PROJECT_NAME}
@@ -135,6 +161,7 @@ add_custom_command(
 		COMMENT 
 			"Calling post build control tool"
 )
+endif()
 
 # called via !Rebuild.ps1
 if(DEFINED GROUP)

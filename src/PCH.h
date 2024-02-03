@@ -5,6 +5,10 @@
 #include <SKSE/SKSE.h>
 #include <REL/Relocation.h>
 
+// lua
+#define SOL_ALL_SAFETIES_ON 1
+#include <sol/forward.hpp>
+
 // winnt
 #include <ShlObj_core.h>
 
@@ -18,3 +22,4 @@ using namespace REL::literals;
 
 // DKUtil
 #include "DKUtil/Logger.hpp"
+#include "DKUtil/Utility.hpp"
